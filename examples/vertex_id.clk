@@ -1,0 +1,40 @@
+// Example shader with VertexId and index-encoded output
+public struct VertexOutput
+{
+    [Builtin(BuiltinType.Position)]
+    public float4 Position;
+
+    [Location(0)]
+    public float4 Color;
+}
+
+public class VertexIdShader
+{
+    [Vertex]
+    public VertexOutput MainVertex()
+    {
+        float2[] positions = new float2[] {
+            new float2(-0.5f, -0.5f),
+            new float2(0.5f, -0.5f),
+            new float2(0.0f, 0.5f)
+        };
+
+        float4[] colors = new float4[] {
+            new float4(1.0f, 0.0f, 0.0f, 1.0f),
+            new float4(0.0f, 1.0f, 0.0f, 1.0f),
+            new float4(0.0f, 0.0f, 1.0f, 1.0f)
+        };
+
+        return new VertexOutput
+        {
+            Position = new float4(positions[VertexId], 0.0f, 1.0f),
+            Color = colors[VertexId]
+        };
+    }
+
+    [Fragment]
+    public float4 MainFragment(VertexOutput input)
+    {
+        return input.Color;
+    }
+}

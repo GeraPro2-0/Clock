@@ -1,0 +1,47 @@
+// Vertex Shader output interface and Fragment Shader input
+public struct VertexOutput 
+{
+    [Builtin(BuiltinType.Position)] 
+    public float4 Position;
+
+    [Location(0)] 
+    public float3 Color;
+}
+
+/*
+  Clock Shading Pipeline (CLKIL)
+  This block packages the graphical entry points.
+*/
+public class TriangleShader 
+{
+    // Vertex Shader entry point
+    [Vertex]
+    public VertexOutput MainVertex() 
+    {
+        float2[] positions = new float2[] {
+            new float2(0.0f, 0.5f),
+            new float2(-0.5f, -0.5f),
+            new float2(0.5f, -0.5f)
+        };
+
+        float3[] colors = new float3[] {
+            new float3(1.0f, 0.0f, 0.0f),
+            new float3(0.0f, 1.0f, 0.0f),
+            new float3(0.0f, 0.0f, 1.0f)
+        };
+
+        return new VertexOutput 
+        {
+            Position = new float4(positions[vIdx], 0.0f, 1.0f),
+            Color = colors[vIdx]
+        };
+    }
+
+    // Fragment Shader entry point
+    [Fragment]
+    [Location(0)]
+    public float4 MainFragment(VertexOutput input) 
+    {
+        return new float4(input.Color, 1.0f);
+    }
+}

@@ -1,0 +1,14 @@
+[package]
+name = "opengl_3_3"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.clock]
+display_name = "OpenGL"
+api_names = ["OpenGL", "GLSL"]
+
+[dependencies]
+Clock = { path = "../../../core" }

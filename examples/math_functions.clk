@@ -1,0 +1,36 @@
+// Shader with math functions
+public struct VertexOutput
+{
+    [Builtin(BuiltinType.Position)]
+    public float4 Position;
+
+    [Location(0)]
+    public float3 Color;
+}
+
+public class MathShader
+{
+    [Vertex]
+    public VertexOutput MainVertex()
+    {
+        float2[] positions = new float2[] {
+            new float2(-0.6f, -0.6f),
+            new float2(0.6f, -0.6f),
+            new float2(0.0f, 0.6f)
+        };
+
+        float wave = Math.Sin(positions[VertexId].x * 3.14f) * 0.1f;
+
+        return new VertexOutput
+        {
+            Position = new float4(positions[VertexId] + new float2(0.0f, wave), 0.0f, 1.0f),
+            Color = new float3(Math.Abs(positions[VertexId].x), Math.Clamp(positions[VertexId].y + 0.5f, 0.0f, 1.0f), 0.2f)
+        };
+    }
+
+    [Fragment]
+    public float4 MainFragment(VertexOutput input)
+    {
+        return new float4(input.Color, 1.0f);
+    }
+}

@@ -44,7 +44,15 @@ jobs:
         mkdir -p dist/api/OpenGL/3.3
         mkdir -p dist/api/OpenGLES/3.0
         cp target/release/Clock.exe dist/
-        cp target/release/clock_opengl.dll dist/api/OpenGL/3.3/ || cp target/release/libclock_opengl.dll dist/api/OpenGL/3.3/ || true
+        
+        if (Test-Path "target/release/clock_opengl.dll") {
+            cp target/release/clock_opengl.dll dist/api/OpenGL/3.3/
+        } elseif (Test-Path "target/release/libclock_opengl.dll") {
+            cp target/release/libclock_opengl.dll dist/api/OpenGL/3.3/
+        } else {
+            echo "Warning: clock_opengl DLL not found in target/release/"
+        }
+        
         compress-archive -Path dist/* -DestinationPath ${{ matrix.asset_name }}
       shell: pwsh
 

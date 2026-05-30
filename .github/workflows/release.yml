@@ -1,0 +1,63 @@
+name: Build and Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: clock-linux-x64
+            asset_name: clock-linux-x64.tar.gz
+          - os: windows-latest
+            artifact_name: clock-windows-x64
+            asset_name: clock-windows-x64.zip
+          - os: macos-latest
+            artifact_name: clock-macos-x64
+            asset_name: clock-macos-x64.tar.gz
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build Workspace
+      run: cargo build --release
+
+    - name: Organize Artifacts (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir -p dist/api/OpenGL/3.3
+        mkdir -p dist/api/OpenGLES/3.0
+        cp target/release/Clock.exe dist/
+        cp target/release/clock_opengl.dll dist/api/OpenGL/3.3/ || cp target/release/libclock_opengl.dll dist/api/OpenGL/3.3/ || true
+        compress-archive -Path dist/* -DestinationPath ${{ matrix.asset_name }}
+      shell: pwsh
+
+    - name: Organize Artifacts (Linux / macOS)
+      if: matrix.os != 'windows-latest'
+      run: |
+        mkdir -p dist/api/OpenGL/3.3
+        mkdir -p dist/api/OpenGLES/3.0
+        cp target/release/Clock dist/
+        cp target/release/libclock_opengl.so dist/api/OpenGL/3.3/ || cp target/release/libclock_opengl.dylib dist/api/OpenGL/3.3/ || true
+        tar -czvf ${{ matrix.asset_name }} -C dist .
+
+    - name: Upload Binaries to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ matrix.asset_name }}
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,7 @@
 # CLKIL Syntax
 
-CLKIL is Clock's shader language. It uses a C#-style surface syntax to describe GPU shader interfaces and entry points.
+CLKIL is Clock's shader language. It uses a C#-style surface syntax to describe GPU shader interfaces
+and entry points.
 
 This document describes the syntax currently supported by the parser and the OpenGL-family backends.
 
@@ -11,9 +12,10 @@ A CLKIL file must define at least:
 - one `struct`
 - one `class`
 
-The `struct` usually describes data passed between shader stages. The `class` contains shader entry point methods.
+The `struct` usually describes data passed between shader stages. The `class` contains shader entry
+point methods.
 
-```clock
+```clkil
 public struct VertexOutput
 {
     [Builtin(BuiltinType.Position)]
@@ -47,13 +49,13 @@ public class TriangleShader
 
 Single-line comments:
 
-```clock
+```clkil
 // This is a comment.
 ```
 
 Block comments:
 
-```clock
+```clkil
 /*
   This is a block comment.
 */
@@ -76,7 +78,7 @@ Other type names, method names, field names, and intrinsic names are parsed as i
 
 Structs define named groups of fields.
 
-```clock
+```clkil
 public struct VertexOutput
 {
     public float4 Position;
@@ -86,7 +88,7 @@ public struct VertexOutput
 
 The parser accepts decorators before fields:
 
-```clock
+```clkil
 [Builtin(BuiltinType.Position)]
 public float4 Position;
 
@@ -100,7 +102,7 @@ The OpenGL-family backends use `[Location(n)]` fields as vertex-to-fragment vary
 
 Classes group shader methods.
 
-```clock
+```clkil
 public class TriangleShader
 {
     [Vertex]
@@ -121,7 +123,7 @@ public class TriangleShader
 
 Method syntax:
 
-```clock
+```clkil
 [Decorator]
 public ReturnType MethodName(parameters)
 {
@@ -129,13 +131,14 @@ public ReturnType MethodName(parameters)
 }
 ```
 
-The parser records the raw method body and passes it to the backend. Parameter lists are currently skipped by the core parser, so backend behavior depends on the target plugin.
+The parser records the raw method body and passes it to the backend. Parameter lists are currently
+skipped by the core parser, so backend behavior depends on the target plugin.
 
 ## Decorators
 
 Decorators use square brackets:
 
-```clock
+```clkil
 [Vertex]
 [Fragment]
 [Location(0)]
@@ -158,18 +161,19 @@ Supported decorators are:
 
 Supported builtin values:
 
-```clock
+```clkil
 BuiltinType.Position
 BuiltinType.VertexId
 ```
 
-The OpenGL-family backends map vertex index usage to `gl_VertexID` when they see `vIdx` in a vertex body. Some examples also use `VertexId`; backend support for builtin naming is still evolving.
+The OpenGL-family backends map vertex index usage to `gl_VertexID` when they see `vIdx` in a
+vertex body. Some examples also use `VertexId`; backend support for builtin naming is still evolving.
 
 ## Data Types
 
 Common CLKIL shader types:
 
-```clock
+```clkil
 float
 float2
 float3
@@ -190,7 +194,7 @@ The OpenGL-family backends map:
 
 Supported numeric literal forms include:
 
-```clock
+```clkil
 0
 1
 -1
@@ -205,7 +209,7 @@ The OpenGL backend strips the `f` suffix in generated GLSL.
 
 Vector construction uses `new`:
 
-```clock
+```clkil
 new float2(0.0f, 0.5f)
 new float3(1.0f, 0.0f, 0.0f)
 new float4(position, 0.0f, 1.0f)
@@ -213,7 +217,7 @@ new float4(position, 0.0f, 1.0f)
 
 Struct returns can use object initializer syntax:
 
-```clock
+```clkil
 return new VertexOutput
 {
     Position = new float4(positions[vIdx], 0.0f, 1.0f),
@@ -225,7 +229,7 @@ return new VertexOutput
 
 Array declarations are used in the examples:
 
-```clock
+```clkil
 float2[] positions = new float2[] {
     new float2(0.0f, 0.5f),
     new float2(-0.5f, -0.5f),
@@ -233,7 +237,8 @@ float2[] positions = new float2[] {
 };
 ```
 
-The OpenGL-family backends rewrite supported `float2`, `float3`, and `float4` array construction into GLSL-style vector arrays.
+The OpenGL-family backends rewrite supported `float2`, `float3`, and `float4` array construction
+into GLSL-style vector arrays.
 
 ## Math Intrinsics
 
@@ -275,9 +280,10 @@ The OpenGL 3.3 and OpenGL ES 3.0 backends currently support vertex and fragment 
 
 It rejects:
 
-```clock
+```clkil
 [Tessellation]
 [Compute]
 ```
 
-The current backend performs several source-to-source rewrites on raw method bodies, so complex CLKIL expressions may need backend work before they transpile correctly.
+The current backend performs several source-to-source rewrites on raw method bodies, so complex CLKIL
+expressions may need backend work before they transpile correctly.

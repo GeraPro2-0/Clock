@@ -1,151 +1,158 @@
-# ADVERTISEMENT
+# Clock ⏱️
 
-This is a **PROTOTYPE**. It has several parsing and transpilation errors that will cause real OpenGL or DirectX compilers to crash,
-and which will hopefully be fixed in the future by the creator or the community. Features such as *mathematical functions, operators
-attached to literals, or array initialization* are **known limitations**, as they may not parse correctly or may even cause a crash
-(for the compiler, because I doubt the transpiler will crash since it was written in **Rust**, but there are no guarantees).
-Thank you for your understanding. <3
+[![Rust](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-# Clock
+Clock is an experimental shader cross-compilation pipeline and shading language runtime written in **Rust**. 
 
-Clock is an experimental shader language and transpilation pipeline written in Rust.
+It allows developers to write shaders using **CLKIL** (a strongly-typed, object-oriented shading language heavily inspired by C# syntax), abstracting the source code into a common, shareable Abstract Syntax Tree (AST). Through a modular system of native plugins loaded via FFI, this AST is then cross-compiled into native source code for different graphics APIs.
 
-It reads source files written in CLKIL, Clock's C#-style shading language, parses them into a shared AST, and sends that AST to a
-graphics API backend plugin. The current backends target OpenGL 3.3 and OpenGL ES 3.0.
+---
 
-## Project Status
+## ⚠️ Project Status & Known Limitations (Help Wanted!)
 
-Clock is early-stage software. The frontend, AST ABI, and OpenGL backend are actively evolving, and the current language support is
-intentionally small.
+Clock is currently a **Proof-of-Concept Prototype**. While the core engine successfully orchestrates token parsing, AST layout generation, and dynamic FFI plugin linkage, the string manipulation and GLSL emit phase under `api/OpenGL/3.3` is undergoing active refactoring.
 
-At the moment, the implemented graphics backends are:
+If you inspect generated outputs (such as `math_functions.vert`), you will notice specific syntax bugs due to string formatting edge cases. **We value honesty and transparency, so we don't hide these defects—instead, we treat them as open milestones!**
 
-- `api/OpenGL/3.3`
-- `api/OpenGLES/3.0`
+### 🚀 Open Compiling Challenges
+We are actively looking for contributors to help optimize the backend emitter inside `api/OpenGL/3.3/lib.rs` (specifically within the `clean_body_syntax` engine):
+* **Lexer / Token Spacing:** Fixing operators attached directly to literals (e.g., generating `x 3.14` instead of `x * 3.14`).
+* **Intrinsic Replacements:** Robust string normalization for built-in math APIs (like `Math.Sin`) when the parser separates spaces.
+* **Builtin System Mappings:** Ensuring variables like `VertexId` resolve cleanly to `gl_VertexID` across nested mathematical expressions.
 
-Other API/version folders may exist for future work, but they are not complete targets unless their backend crate implements the
-required plugin entry point.
+If you enjoy Rust AST manipulation, FFI, or graphics programming, this is a fun sandbox to jump into!
 
-## Repository Layout
+---
+
+## 📂 Repository Layout
 
 ```text
 .
 |-- core/                 # Clock CLI, lexer, parser, AST ABI, plugin loader
-|-- api/OpenGL/3.3/       # OpenGL 3.3 backend plugin
-|-- api/OpenGLES/3.0/     # OpenGL ES 3.0 backend plugin
-|-- tests/                # Example CLKIL files and generated GLSL outputs
-|-- triangle.clk          # Basic sample shader
-|-- DOCUMENTACION.md      # Original Spanish syntax documentation
-|-- README.md             # Project overview
-|-- CONTRIBUTING.md       # Contribution guide
-`-- SYNTAX.md             # CLKIL syntax reference
+|-- api/OpenGL/3.3/       # OpenGL 3.3 pipeline backend plugin (Active Work-In-Progress)
+|-- api/OpenGLES/3.0/     # OpenGL ES 3.0 pipeline backend plugin
+|-- api/DirectX/          # This doesn't exist (yet)
+|-- api/Vulkan/           # This doesn't exist (yet)
+|-- api/Metal/            # This doesn't exist (yet)
+|-- api/WebGPU/           # This doesn't exist (yet)
+|-- tests/                # Sample CLKIL files and their current generated outputs
+|-- triangle.clk          # Basic sample shader source
+`-- SYNTAX.md             # Detailed documentation of the CLKIL language specification
 ```
 
-## How It Works
+---
+
+## 🔄 Architectural Workflow
 
 ```text
-.clk source
-  -> lexer
-  -> parser
-  -> ClockAST
-  -> graphics API plugin
-  -> generated shader source
+.clk Source ──> Lexer ──> Parser ──> ClockAST ──> FFI Plugin ──> GLSL Output (*.vert/*.frag)
 ```
 
-The `core` crate owns the CLI, tokenization, parsing, AST memory layout, and dynamic plugin loading. Backend plugins expose a `compile_ast`
-function through a C-compatible ABI and return a `TranspiledPipeline` containing generated shader stages.
+The core module takes care of the parsing heavy-lifting and exposes a C-compatible compile_ast entry point over the ABI boundary. Backend plugins digest this raw memory mapping and return a structured TranspiledPipeline.
 
-The current OpenGL-family plugins emit:
+---
 
-- `*.vert`
-- `*.frag`
+## 🚀 Quick Start
+Prerequisites
+Rust 2021 toolchain (Cargo).
 
-## Requirements
+An OS supporting compiled dynamic libraries (.dll, .so, or .dylib).
 
-- Rust 2021 toolchain
-- Cargo
-- A platform that supports dynamic libraries
-- Optional: `make`, if you want to use the provided `Makefile`
+make (Optional, used to automate cross-platform artifact routing).
 
-## Build
-
-Build the full workspace:
-
-```bash
-cargo build --release
-```
-
-Or use the Makefile:
+### 1. Build the Workspace and Organize Plugins
+The repository contains a cross-platform POSIX-friendly Makefile compatible with Windows (MSYS2/Cygwin), Linux, and macOS. It builds the full workspace in release mode and automatically maps the target artifacts to their corresponding system architecture folders:
 
 ```bash
 make
 ```
 
-The Makefile builds the workspace and copies plugin artifacts into a release API layout.
-
-## Usage
-
-Run the Clock CLI with a source file, API name, and API version:
+### 2. Transpile a Shader
+To execute the transpiler against the sample triangle.clk file using the OpenGL 3.3 backend plugin structure, run:
 
 ```bash
-cargo run -p Clock -- file=triangle.clk api=OpenGL version=3.3
+./target/release/Clock file=examples/triangle.clk api=OpenGL version=3.3
 ```
 
-For OpenGL ES 3.0:
+or (depending on your OS):
 
 ```bash
-cargo run -p Clock -- file=triangle.clk "api=OpenGL ES" version=3.0
+./target/release/Clock file=C:/Users/Clock/examples/triangle.clk api=OpenGL version=3.3
 ```
 
-The compact backend ID also works: `api=OpenGLES`.
+---
 
-With a release build:
-
-```bash
-./target/release/Clock file=triangle.clk api=OpenGL version=3.3
-```
-
-On success, Clock writes generated shader files next to the input file. For `triangle.clk`, the outputs are:
-
-```text
-triangle.vert
-triangle.frag
-```
-
-## Example
-
-```clock
-public struct VertexOutput
+## 📝 Code Sample (CLKIL Syntax)
+```clkil
+// Vertex Shader output interface and Fragment Shader input
+public struct VertexOutput 
 {
-    [Builtin(BuiltinType.Position)]
+    [Builtin(BuiltinType.Position)] 
     public float4 Position;
 
-    [Location(0)]
+    [Location(0)] 
     public float3 Color;
 }
 
-public class TriangleShader
+/*
+  Clock Shading Pipeline (CLKIL)
+  This block packages the graphical entry points.
+*/
+public class TriangleShader 
 {
+    // Vertex Shader entry point
     [Vertex]
-    public VertexOutput MainVertex()
+    public VertexOutput MainVertex() 
     {
-        return new VertexOutput
-        {
-            Position = new float4(0.0f, 0.0f, 0.0f, 1.0f),
-            Color = new float3(1.0f, 0.0f, 0.0f)
+        float2[] positions = new float2[] {
+            new float2(0.0f, 0.5f),
+            new float2(-0.5f, -0.5f),
+            new float2(0.5f, -0.5f)
         };
-    }
 
-    [Fragment]
-    public float4 MainFragment(VertexOutput input)
-    {
-        return new float4(input.Color, 1.0f);
+        float3[] colors = new float3[] {
+            new float3(1.0f, 0.0f, 0.0f),
+            new float3(0.0f, 1.0f, 0.0f),
+            new float3(0.0f, 0.0f, 1.0f)
+        };
+
+        return new VertexOutput 
+        {
+            Position = new float4(positions[vIdx], 0.0f, 1.0f),
+            Color = colors[vIdx]
+        };
     }
 }
 ```
+### 🛹 Results (contains errors)
 
-See `SYNTAX.md` for the current CLKIL syntax.
+Vertex Shader:
+```glsl
+#version 330 core
 
-## License
+layout (location = 0) out vec3 Color;
 
-The source files include Apache License 2.0 headers.
+void main() {
+    vec2 positions[3] = vec2[3](vec2 (0.0 , 0.5 ) , vec2 (-0.5 , -0.5 ) , vec2 (0.5 , -0.5 ));
+        vec3 colors[3] = vec3[3](vec3 (1.0 , 0.0 , 0.0 ) , vec3 (0.0 , 1.0 , 0.0 ) , vec3 (0.0 , 0.0 , 1.0 ));
+        gl_Position = vec4 (positions [gl_VertexID ], 0.0 , 1.0 );
+    Color = colors [gl_VertexID ];
+}
+```
+
+Fragment Shader:
+```glsl
+#version 330 core
+
+layout (location = 0) in vec3 Color;
+
+out vec4 FragColor;
+
+void main() {
+    FragColor = vec4(Color, 1.0);
+}
+```
+
+# 📄 License
+This project is licensed under the Apache License 2.0. See individual file headers for specific copyright declarations.
